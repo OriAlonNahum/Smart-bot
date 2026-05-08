@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עוזר לימודי חכם - בית ספר</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f0f2f5;
+            --bot-msg-color: #ffffff;
+            --user-msg-color: #4a90e2;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 450px;
+            height: 80vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        #chat-window {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f9f9f9;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 15px;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bot-msg {
+            background: var(--bot-msg-color);
+            color: #333;
+            align-self: flex-start;
+            border: 1px solid #eee;
+            border-bottom-right-radius: 2px;
+        }
+
+        .user-msg {
+            background: var(--user-msg-color);
+            color: white;
+            align-self: flex-end;
+            border-bottom-left-radius: 2px;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            display: flex;
+            border-top: 1px solid #eee;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        input:focus { border-color: var(--primary-color); }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            margin-right: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:active { transform: scale(0.95); }
+
+        .typing {
+            font-style: italic;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">🤖 עוזר לימודי אישי (גרסה מבוקרת)</div>
+    <div id="chat-window">
+        <div class="msg bot-msg">שלום! אני הבוט הלימודי שלך. שאל אותי על מבחנים, שיעורי בית או חומר לימודי בהיסטוריה ובמדעים!</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="הקלד שאלה כאן..." autocomplete="off">
+        <button onclick="askBot()">שלח</button>
+    </div>
+</div>
+
+<script>
+    // מאגר ידע מוכן מראש - אין צורך להוסיף כלום!
+    const knowledgeBase = [
+        { keywords: ["שלום", "היי", "בוקר טוב", "ערב טוב"], answer: "שלום רב! אני כאן כדי לעזור לך להצליח בלימודים. מה השאלה שלך?" },
+        { keywords: ["מבחן", "מתי המבחן", "תאריך"], answer: "המבחן הקרוב בהיסטוריה נקבע ליום שלישי הבא ב-08:30. המבחן במתמטיקה יתקיים ביום חמישי." },
+        { keywords: ["שיעורים", "שיעורי בית", "מתמטיקה"], answer: "שיעורי הבית להיום: לסיים את התרגילים בעמ' 42-44 ולשלוח למורה עד הערב." },
+        { keywords: ["חומר", "נושאים", "מה ללמוד"], answer: "למבחן הקרוב יש ללמוד על המהפכה הצרפתית, הצהרת בלפור, ופרקים א'-ג' בספר מדעים." },
+        { keywords: ["עזרה", "איך אתה עובד", "מה אתה עושה"], answer: "אני בוט מבוקר. אני יודע לענות על שאלות בנושאי לוח זמנים, חומר לימודי ושיעורי בית." },
+        { keywords: ["מדעים", "אנרגיה", "חשמל"], answer: "במדעים אנחנו לומדים כרגע על סוגי אנרגיה: אנרגיה קינטית, פוטנציאלית ואנרגיית חום." },
+        { keywords: ["היסטוריה", "מלחמה", "צרפת"], answer: "בהיסטוריה אנחנו מתמקדים במהפכה הצרפתית ובשינויים החברתיים באירופה במאה ה-18." },
+        { keywords: ["תודה", "תודה רבה", "עזרת לי"], answer: "בשמחה! אני תמיד כאן אם תצטרך עזרה נוספת. בהצלחה בלימודים!" }
+    ];
+
+    function askBot() {
+        const inputField = document.getElementById('userInput');
+        const chatWindow = document.getElementById('chat-window');
+        const userText = inputField.value.trim();
+
+        if (!userText) return;
+
+        // הצגת הודעת משתמש
+        chatWindow.innerHTML += `<div class="msg user-msg">${userText}</div>`;
+        inputField.value = '';
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        // יצירת מזהה ייחודי להודעת "הבוט מקליד"
+        const typingId = "typing-" + Date.now();
+        chatWindow.innerHTML += `<div id="${typingId}" class="typing">הבוט חושב...</div>`;
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        // חיפוש תשובה במאגר
+        setTimeout(() => {
+            const typingElem = document.getElementById(typingId);
+            if (typingElem) typingElem.remove();
+
+            let botReply = "אני מצטער, המידע הזה לא נמצא בחומר הלימוד המבוקר שלי. כדאי להתייעץ עם המורה.";
+            const lowerInput = userText.toLowerCase();
+
+            for (let item of knowledgeBase) {
+                if (item.keywords.some(word => lowerInput.includes(word))) {
+                    botReply = item.answer;
+                    break;
+                }
+            }
+
+            chatWindow.innerHTML += `<div class="msg bot-msg">${botReply}</div>`;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }, 800);
+    }
+
+    // הפעלת שליחה בלחיצה על Enter
+    document.getElementById("userInput").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") askBot();
+    });
+</script>
+
+</body>
+</html>
